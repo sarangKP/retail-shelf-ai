@@ -2,6 +2,11 @@
 __pycache__/
 *.pyc
 .env
-outputs/
+outputs/*
+!outputs/7692c95959c5.jpg
+!outputs/af23d7ed7683.jpg
+!outputs/b58c7e557b14.jpg
+!outputs/9ae8a5ceb070.jpg
+!outputs/7f9d56857f86.jpg
 *.pt
 .ipynb_checkpoints/
