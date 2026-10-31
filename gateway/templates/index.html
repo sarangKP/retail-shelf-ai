@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Retail Shelf AI Pipeline</title>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.4rem; }
+    #result img { max-width: 100%; border: 1px solid #ccc; margin-top: 1rem; }
+    table { border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 4px 10px; text-align: left; }
+    .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; }
+    pre { background: #f5f5f5; padding: 1rem; overflow-x: auto; max-height: 400px; }
+    #status { color: #666; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Retail Shelf AI Pipeline</h1>
+  <p>Upload a shelf image. It's detected, grouped by brand, and visualized.</p>
+
+  <form id="upload-form">
+    <input type="file" id="image-input" name="image" accept="image/*" required>
+    <button type="submit">Analyze</button>
+  </form>
+  <div id="status"></div>
+
+  <div id="result" style="display:none;">
+    <h2>Visualization</h2>
+    <img id="vis-image" alt="visualization">
+
+    <h2>Groups</h2>
+    <table id="groups-table">
+      <thead><tr><th>Group ID</th><th>Color</th><th>Count</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Raw JSON</h2>
+    <pre id="raw-json"></pre>
+  </div>
+
+  <script>
+    const form = document.getElementById('upload-form');
+    const status = document.getElementById('status');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById('image-input');
+      if (!fileInput.files.length) return;
+
+      const formData = new FormData();
+      formData.append('image', fileInput.files[0]);
+
+      status.textContent = 'Analyzing...';
+      result.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/analyze', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) {
+          status.textContent = 'Error: ' + (data.error || res.statusText);
+          return;
+        }
+        status.textContent = `Done in ${data.latency_ms.total} ms ` +
+          `(detect ${data.latency_ms.detect} ms, group ${data.latency_ms.group} ms) ` +
+          `-- ${data.num_products} products, ${data.num_groups} groups`;
+
+        document.getElementById('vis-image').src = data.visualization_url;
+
+        const tbody = document.querySelector('#groups-table tbody');
+        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+        for (const g of data.groups) {
+          const row = document.createElement('tr');
+
+          const idCell = document.createElement('td');
+          idCell.textContent = g.group_id;
+
+          const colorCell = document.createElement('td');
+          const swatch = document.createElement('span');
+          swatch.className = 'swatch';
+          swatch.style.background = g.color;
+          colorCell.appendChild(swatch);
+          colorCell.append(' ' + g.color);
+
+          const countCell = document.createElement('td');
+          countCell.textContent = g.count;
+
+          row.append(idCell, colorCell, countCell);
+          tbody.appendChild(row);
+        }
+
+        document.getElementById('raw-json').textContent = JSON.stringify(data, null, 2);
+        result.style.display = 'block';
+      } catch (err) {
+        status.textContent = 'Error: ' + err;
+      }
+    });
+  </script>
+</body>
+</html>

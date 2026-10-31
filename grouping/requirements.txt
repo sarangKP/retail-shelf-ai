@@ -1,0 +1,7 @@
+flask==3.0.3
+gunicorn==22.0.0
+torch==2.4.1
+transformers==4.44.2
+scikit-learn==1.5.1
+numpy==1.26.4
+pillow==10.4.0

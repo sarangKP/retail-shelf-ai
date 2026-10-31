@@ -1,0 +1,5 @@
+flask==3.0.3
+gunicorn==22.0.0
+ultralytics==8.2.103
+huggingface_hub==0.24.6
+pillow==10.4.0
